@@ -25,14 +25,14 @@ $DepartmentGroups = @{
     'Parks' = @('GRP-Parks', 'GRP-AllStaff')
 }
 
-function Write-Log {
+function Write-OnboardingLog {
     param(
         [string]$Message,
         [ValidateSet('INFO','WARN','ERROR')][string]$Level = 'INFO'
     )
     $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
     $logMessage = "$timestamp [$Level] $Message"
-    Write-Host $logMessage
+    Write-Information $logMessage -InformationAction Continue
     if ($script:WriteToLogFile) {
         Add-Content -LiteralPath $script:LogFilePath -Value $logMessage
     }
@@ -82,7 +82,7 @@ function Test-NewHireRow {
     return ,$errors.ToArray()
 }
 
-function New-Username {
+function Get-AvailableUsername {
     param(
         [string]$FirstName,
         [string]$LastName,
@@ -144,11 +144,11 @@ for ($rowIndex = 0; $rowIndex -lt $rows.Count; $rowIndex++) {
         $validationErrors = Test-NewHireRow -Row $row
         if ($validationErrors.Count -gt 0) {
             $skipped++
-            Write-Log -Level 'WARN' -Message "Row $($rowIndex + 1) skipped: $($validationErrors -join ' ')"
+            Write-OnboardingLog -Level 'WARN' -Message "Row $($rowIndex + 1) skipped: $($validationErrors -join ' ')"
             continue
         }
 
-        $username = New-Username -FirstName $row.FirstName -LastName $row.LastName -ExistingUsernames $existingUsernames
+        $username = Get-AvailableUsername -FirstName $row.FirstName -LastName $row.LastName -ExistingUsernames $existingUsernames
         $newUser = [PSCustomObject]@{
             FirstName  = $row.FirstName.Trim()
             LastName   = $row.LastName.Trim()
@@ -161,10 +161,10 @@ for ($rowIndex = 0; $rowIndex -lt $rows.Count; $rowIndex++) {
         }
         $pendingUsers.Add($newUser)
         [void]$existingUsernames.Add($username)
-        Write-Log -Message "Prepared user '$username' for $($row.FirstName) $($row.LastName)."
+        Write-OnboardingLog -Message "Prepared user '$username' for $($row.FirstName) $($row.LastName)."
     } catch {
         $failed++
-        Write-Log -Level 'ERROR' -Message "Row $($rowIndex + 1) failed: $($_.Exception.Message)"
+        Write-OnboardingLog -Level 'ERROR' -Message "Row $($rowIndex + 1) failed: $($_.Exception.Message)"
     }
 }
 
@@ -181,10 +181,10 @@ if ($pendingUsers.Count -gt 0) {
             Set-Content -LiteralPath $temporaryPath -Value $updatedJson -Encoding utf8
             Move-Item -LiteralPath $temporaryPath -Destination $DirectoryPath -Force
             $created = $pendingUsers.Count
-            Write-Log -Message "Added $created user(s) to '$DirectoryPath'."
+            Write-OnboardingLog -Message "Added $created user(s) to '$DirectoryPath'."
         } catch {
             $failed += $pendingUsers.Count
-            Write-Log -Level 'ERROR' -Message "Could not update directory '$DirectoryPath': $($_.Exception.Message)"
+            Write-OnboardingLog -Level 'ERROR' -Message "Could not update directory '$DirectoryPath': $($_.Exception.Message)"
         } finally {
             if (Test-Path -LiteralPath $temporaryPath) {
                 Remove-Item -LiteralPath $temporaryPath -Force
@@ -194,20 +194,20 @@ if ($pendingUsers.Count -gt 0) {
         $wouldCreate = $pendingUsers.Count
     } else {
         $skipped += $pendingUsers.Count
-        Write-Log -Level 'WARN' -Message 'Directory update was declined; prepared users were skipped.'
+        Write-OnboardingLog -Level 'WARN' -Message 'Directory update was declined; prepared users were skipped.'
     }
 }
 
-Write-Host ''
-Write-Host 'Onboarding summary'
-Write-Host "Created: $created"
+Write-Information '' -InformationAction Continue
+Write-Information 'Onboarding summary' -InformationAction Continue
+Write-Information "Created: $created" -InformationAction Continue
 if ($WhatIfPreference) {
-    Write-Host "Would create: $wouldCreate"
+    Write-Information "Would create: $wouldCreate" -InformationAction Continue
 }
-Write-Host "Skipped: $skipped"
-Write-Host "Failed: $failed"
+Write-Information "Skipped: $skipped" -InformationAction Continue
+Write-Information "Failed: $failed" -InformationAction Continue
 if ($script:WriteToLogFile) {
-    Write-Host "Log: $script:LogFilePath"
+    Write-Information "Log: $script:LogFilePath" -InformationAction Continue
 } else {
-    Write-Host 'Log: not written (WhatIf or declined)'
+    Write-Information 'Log: not written (WhatIf or declined)' -InformationAction Continue
 }
