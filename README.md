@@ -16,12 +16,29 @@ Run the onboarding process:
 .\src\Onboarding.ps1
 ```
 
-## Tests
+## Quality Checks
+
+Install the tools for local checks:
+
+```powershell
+Install-Module PSScriptAnalyzer -Scope CurrentUser
+Install-Module Pester -Scope CurrentUser -Force -SkipPublisherCheck
+```
+
+Lint the scripts. Any analyzer finding causes the CI lint step to fail:
+
+```powershell
+$issues = Invoke-ScriptAnalyzer -Path ./src -Recurse
+$issues | Format-Table
+if ($issues) { exit 1 }
+```
 
 Run the Pester tests from the project directory:
 
 ```powershell
-Invoke-Pester -Path .\tests -CI
+Invoke-Pester ./Tests -CI
 ```
 
-GitHub Actions runs the same tests on pushes and pull requests to `main`.
+## Continuous Integration
+
+The GitHub Actions workflow in `.github/workflows/ci.yml` runs on pushes and pull requests. On `windows-latest`, it installs PSScriptAnalyzer and Pester, lints the scripts, and runs the test suite. The workflow fails if lint findings are reported or any tests fail.
