@@ -1,5 +1,7 @@
 # HR Onboarding Automation
 
+[![CI](https://github.com/timothyjeffcoat/powershell-automation-samples/actions/workflows/ci.yml/badge.svg)](https://github.com/timothyjeffcoat/powershell-automation-samples/actions/workflows/ci.yml)
+
 A PowerShell script that reads new-hire rows from `data/new-hires.csv`, validates each row, generates unique usernames and `@example.gov` email addresses, maps departments to security groups, and adds valid users to `data/directory.json`. Invalid rows are logged and skipped so processing can continue. Each run prints a created, skipped, and failed summary and writes a timestamped log.
 
 ## Run
@@ -36,7 +38,7 @@ if ($issues) { exit 1 }
 Run the Pester tests from the project directory:
 
 ```powershell
-Invoke-Pester ./Tests -CI
+Invoke-Pester ./tests -CI
 ```
 
 ## Continuous Integration
