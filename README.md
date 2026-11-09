@@ -30,9 +30,7 @@ Install-Module Pester -Scope CurrentUser -Force -SkipPublisherCheck
 Lint the scripts. Any analyzer finding causes the CI lint step to fail:
 
 ```powershell
-$issues = Invoke-ScriptAnalyzer -Path ./src -Recurse
-$issues | Format-Table
-if ($issues) { exit 1 }
+Invoke-ScriptAnalyzer -Path ./src -Recurse
 ```
 
 Run the Pester tests from the project directory:
