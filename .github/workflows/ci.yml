@@ -1,0 +1,25 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force
+          $issues = Invoke-ScriptAnalyzer -Path ./src -Recurse
+          $issues | Format-Table
+          if ($issues) { exit 1 }
+
+      - name: Test
+        shell: pwsh
+        run: |
+          Install-Module Pester -Force -SkipPublisherCheck
+          Invoke-Pester ./Tests -CI
